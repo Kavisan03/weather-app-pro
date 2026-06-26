@@ -1,5 +1,5 @@
 // 🛑 ඔබගේ අලුත් API Key එක මෙතන දාන්න (OpenWeatherMap එකෙන් අලුතින් හදාගන්න)
-const API_KEY = '9b7aedec1e44e6e36542435098051b10'; 
+const API_KEY = 'API KEY'; 
 
 const cityInput = document.getElementById('cityInput');
 const weatherResult = document.getElementById('weatherResult');
