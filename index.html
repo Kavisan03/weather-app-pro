@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌤️ WeatherApp Pro · Time API</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            transition: background 1.5s ease;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+        }
+
+        .bg-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: inherit;
+            z-index: -1;
+            animation: gradientShift 15s ease infinite;
+            background-size: 400% 400%;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 40px;
+            padding: 40px 35px;
+            width: 480px;
+            max-width: 100%;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            z-index: 10;
+        }
+
+        h1 {
+            color: #fff;
+            text-align: center;
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 25px;
+            text-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+
+        .search-box {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 60px;
+            background: rgba(255, 255, 255, 0.9);
+            font-size: 16px;
+            font-weight: 600;
+            outline: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: 0.3s;
+        }
+
+        .search-box input:focus {
+            transform: scale(1.02);
+            background: #fff;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+
+        .search-box button {
+            padding: 15px 28px;
+            border: none;
+            border-radius: 60px;
+            background: #00d2ff;
+            color: #fff;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 5px 20px rgba(0, 210, 255, 0.4);
+            white-space: nowrap;
+        }
+
+        .search-box button:hover {
+            transform: scale(1.05) translateY(-3px);
+            background: #0099cc;
+            box-shadow: 0 10px 30px rgba(0, 210, 255, 0.6);
+        }
+
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 6px solid rgba(255,255,255,0.3);
+            border-top: 6px solid #ffffff;
+            border-radius: 50%;
+            margin: 20px auto;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .weather-card {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 30px;
+            padding: 25px 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .weather-card.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
+
+        .error-msg {
+            color: #ff6b6b;
+            text-align: center;
+            margin-top: 15px;
+            font-weight: 700;
+            font-size: 1rem;
+            animation: shake 0.5s ease;
+        }
+
+        .weather-header {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .weather-header h2 {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .weather-header p {
+            opacity: 0.7;
+            font-size: 0.9rem;
+        }
+
+        .weather-main {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin: 10px 0;
+        }
+
+        .weather-main img {
+            width: 100px;
+            height: 100px;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.2));
+        }
+
+        .temp-details {
+            text-align: left;
+        }
+
+        #temperature {
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1;
+            text-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+
+        #description {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            text-transform: capitalize;
+        }
+
+        .weather-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+            padding: 12px 8px;
+            border-radius: 16px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .stat span {
+            display: block;
+        }
+
+        .stat span:first-child {
+            font-size: 0.75rem;
+            opacity: 0.7;
+            margin-bottom: 3px;
+        }
+
+        .stat span:last-child {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        @media (max-width: 500px) {
+            .container { padding: 25px 20px; }
+            #temperature { font-size: 2.8rem; }
+            .weather-main img { width: 70px; height: 70px; }
+            .weather-stats { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-overlay" id="bgOverlay"></div>
+
+    <div class="container">
+        <h1><i class="fas fa-cloud-sun"></i> WeatherApp <span style="font-size: 1.2rem; background: rgba(255,255,255,0.1); padding: 0 12px; border-radius: 60px; margin-left: 8px;">Pro</span></h1>
+
+        <div class="search-box">
+            <input type="text" id="cityInput" placeholder="Enter city name (e.g., London)" spellcheck="false">
+            <button onclick="getWeather()"><i class="fas fa-search"></i> Search</button>
+        </div>
+
+        <div id="loader" class="loader" style="display: none;"></div>
+
+        <div id="weatherResult" class="weather-card">
+            <div class="weather-header">
+                <h2 id="cityName">--</h2>
+                <p id="dateTime">--</p>
+            </div>
+            <div class="weather-main">
+                <img id="weatherIcon" src="" alt="weather icon">
+                <div class="temp-details">
+                    <p id="temperature">--°C</p>
+                    <p id="description">--</p>
+                </div>
+            </div>
+            <div class="weather-stats">
+                <div class="stat"><span>💧 Humidity</span><span id="humidity">--%</span></div>
+                <div class="stat"><span>💨 Wind</span><span id="wind">-- km/h</span></div>
+                <div class="stat"><span>🌡️ Feels Like</span><span id="feelsLike">--°C</span></div>
+            </div>
+        </div>
+
+        <p id="errorMsg" class="error-msg"></p>
+    </div>
+
+    <script>
+        (function() {
+            "use strict";
+
+            // ----- API Keys (from your image) -----
+            const WEATHER_API_KEY = '9b7aedec1e44e6e36542435098051b10';
+            const TIME_API_KEY = 'cc9ff7079cmsh0d951cf7c541e9d91112cfjsn542d1decd61f';
+            const TIME_API_HOST = 'world-time-api3.p.rapidapi.com';
+
+            // DOM refs
+            const cityInput = document.getElementById('cityInput');
+            const weatherResult = document.getElementById('weatherResult');
+            const loader = document.getElementById('loader');
+            const errorMsg = document.getElementById('errorMsg');
+
+            const cityNameEl = document.getElementById('cityName');
+            const dateTimeEl = document.getElementById('dateTime');
+            const weatherIcon = document.getElementById('weatherIcon');
+            const temperatureEl = document.getElementById('temperature');
+            const descriptionEl = document.getElementById('description');
+            const humidityEl = document.getElementById('humidity');
+            const windEl = document.getElementById('wind');
+            const feelsLikeEl = document.getElementById('feelsLike');
+
+            function showError(msg) {
+                errorMsg.textContent = msg || '⚠️ Could not fetch weather.';
+                errorMsg.style.display = 'block';
+                setTimeout(() => { errorMsg.style.display = 'none'; }, 6000);
+            }
+
+            function clearError() { errorMsg.style.display = 'none'; }
+
+            // ----- Fetch time from World Time API -----
+            async function fetchTimeForCity(city) {
+                try {
+                    // First try to get timezone from city name
+                    const url = `https://${TIME_API_HOST}/api.txt`;
+                    const options = {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-rapidapi-host': TIME_API_HOST,
+                            'x-rapidapi-key': TIME_API_KEY
+                        }
+                    };
+                    
+                    const response = await fetch(url, options);
+                    if (!response.ok) {
+                        throw new Error(`Time API error: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    // The API returns timezone data for the server location
+                    // Since we can't get timezone by city name with this free API,
+                    // we'll format the current time nicely
+                    const now = new Date();
+                    return now.toLocaleString('en-US', {
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                    });
+                } catch (error) {
+                    console.warn('Time API error, using local time:', error);
+                    // Fallback to local time
+                    const now = new Date();
+                    return now.toLocaleString('en-US', {
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                    });
+                }
+            }
+
+            // ----- Fetch weather from OpenWeatherMap -----
+            async function fetchWeather(city) {
+                const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${WEATHER_API_KEY}&units=metric`;
+                const response = await fetch(url);
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.message || `HTTP ${response.status}`);
+                }
+                return await response.json();
+            }
+
+            // ----- Get city timezone offset from OpenWeatherMap -----
+            function getCityTime(data) {
+                // OpenWeatherMap returns timezone offset in seconds
+                const timezoneOffset = data.timezone || 0;
+                const now = new Date();
+                // Get UTC time in milliseconds and add the offset
+                const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+                const cityTime = new Date(utcTime + (timezoneOffset * 1000));
+                
+                return cityTime.toLocaleString('en-US', {
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+            }
+
+            // ----- Update UI with weather data -----
+            function updateWeatherUI(city, data) {
+                // City name
+                cityNameEl.textContent = `${data.name}, ${data.sys.country}`;
+
+                // Date & time using timezone from OpenWeatherMap
+                dateTimeEl.textContent = getCityTime(data);
+
+                // Weather icon
+                const iconCode = data.weather[0].icon;
+                weatherIcon.src = `https://openweathermap.org/img/wn/${iconCode}@4x.png`;
+                weatherIcon.alt = data.weather[0].description;
+
+                // Temperature, description
+                temperatureEl.textContent = `${Math.round(data.main.temp)}°C`;
+                descriptionEl.textContent = data.weather[0].description;
+
+                // Stats
+                humidityEl.textContent = `${data.main.humidity}%`;
+                windEl.textContent = `${(data.wind.speed * 3.6).toFixed(1)} km/h`;
+                feelsLikeEl.textContent = `${Math.round(data.main.feels_like)}°C`;
+
+                weatherResult.classList.add('show');
+                clearError();
+            }
+
+            // ----- Main getWeather -----
+            window.getWeather = async function() {
+                const city = cityInput.value.trim();
+                if (!city) {
+                    showError('Please enter a city name.');
+                    return;
+                }
+                await performWeatherFetch(city);
+            };
+
+            // ----- Core fetch with loading state -----
+            async function performWeatherFetch(city) {
+                loader.style.display = 'block';
+                weatherResult.classList.remove('show');
+                clearError();
+
+                try {
+                    const data = await fetchWeather(city);
+                    updateWeatherUI(city, data);
+                    
+                    // Also try to get time from Time API (as backup)
+                    // But we already have time from OpenWeatherMap
+                } catch (err) {
+                    console.error('Weather fetch error:', err);
+                    showError(`Could not get weather for "${city}". ${err.message}`);
+                } finally {
+                    loader.style.display = 'none';
+                }
+            }
+
+            // ----- Enter key on input -----
+            cityInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    getWeather();
+                }
+            });
+
+            // Auto-load default city on startup
+            window.addEventListener('load', () => {
+                cityInput.value = 'Colombo';
+                performWeatherFetch('Colombo');
+            });
+
+        })();
+    </script>
+
+</body>
+</html>
